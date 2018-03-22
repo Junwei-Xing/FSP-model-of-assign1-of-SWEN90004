@@ -1,0 +1,44 @@
+ Discussion of b1
+
+ XING JUNWEI   745568
+
+ According to the questions Assignment 1b lists, there are main findings and my corresponding explanations through this article.
+
+ (1) By using LTSA to check safety and liveness properties in FSP models of solution1 and solution2, the result shows that safety
+
+ and progress violations happen in solution1’s, but no error in solution2’s. In solution 1, safety and progress properties both
+
+ present a same trace which break their requirements: create_tagged -> move -> create_tagged -> move -> getting -> move -> 
+
+ create_tagged -> sendingToInspector -> removeTag -> sendingToBelt.  After that, an action “backing” should be executed to put
+
+ the processed bicycle back on the segment 3. Obviously, this trace causes a deadlock that the second tagged bicycle is waiting
+
+ to be got by robot arm but robot arm is passing the first processed bicycle back. (2) By a comparison, the result of solution1
+
+ and solution2 in FSP model is same as the java implementation of a1. (3) I did not find problems with my part 1a, solution 2 submission;
+
+ indeed, I cannot completely ensure that these are not problems existed in when I submitted part 1a, solution 2. The reason is that,
+
+ even though design arithmetic of solution 2 seems the execution should work for the specification requirements. I just tried the test cases
+
+ (presented as traces of operations) I could think out as much as possible, but it is certain that the enumeration could not cover all possibilities
+
+ which solution2 implied. However, in order to solve this consideration, the FSP model established all relations and combinations among all processes
+
+ and even their specific actions. (4) In general, by modelling FSP after implementing it in java code, reverse engineering can spend less resource
+
+ to discover some potential issues in an existing system. For instance in this case, when I found out an error happen at the execution of part 1a
+
+ solusion1, I did several attempts to alter the java code for locating where is this error from. In concept, FSP model mainly focus on checking the
+
+ correctness of safety and liveness properties, and programmers are able to use this tool to debug by detecting whether a deadlock will happen, and
+
+ whether all purpose processes will access the critical sections of this system. By this double guarantee (execution result in java implement and
+
+ reverse engineering in FSP model), I believe that there are no problems in solution2. 
+
+
+
+
+

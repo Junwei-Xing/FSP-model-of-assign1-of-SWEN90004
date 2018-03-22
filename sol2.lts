@@ -1,0 +1,76 @@
+/**
+Author: XING JUNWEI, student ID: 745568, this FSP model is for simulating the process of a1's solution2.
+*/
+//these three integers are for the transfer of conditions of each segment of belt and robot arm.
+const NONEBIKE = 0
+const UNTAGGEDBIKE = 1
+const TAGGEDBIKE = 2
+
+range MYRANGE = NONEBIKE..TAGGEDBIKE
+
+//create a tagged bike or a untagged bike or leaving a empty on the segment 1 as a producer.
+PRODUCER = ( create_tagged -> PRODUCER|
+			create_untagged -> PRODUCER|
+			create_null -> PRODUCER).
+
+//each parameter represents a corresponding segment of belt.
+BELT=BELT[NONEBIKE][NONEBIKE][NONEBIKE][NONEBIKE][NONEBIKE],
+BELT[s1:MYRANGE][s2:MYRANGE][s3:MYRANGE][s4:MYRANGE][s5:MYRANGE]=(
+
+//if the segment 1 is empty now, allows that producer can create a bike to there.
+when(s1 == NONEBIKE) create_null -> BELT[NONEBIKE][s2][s3][s4][s5]|
+when(s1 == NONEBIKE) create_untagged -> BELT[UNTAGGEDBIKE][s2][s3][s4][s5]|
+when(s1 == NONEBIKE) create_tagged -> BELT[TAGGEDBIKE][s2][s3][s4][s5]|
+
+//beltmover; move, if there is no bike on the segment 5, if there is no a tagged bike is waiting on the segment 5, if there are at least 1 bike on the belt.
+when(s5 == NONEBIKE && s3<TAGGEDBIKE && (s1+s2+s3+s4+s5>0)) move -> BELT[NONEBIKE][s1][s2][s3][s4]|
+
+//when detecting there is a tagged bike on the segment 3, acquiring it by robot arm.
+when(s3 == TAGGEDBIKE) getting -> BELT[s1][s2][NONEBIKE][s4][s5]|
+
+//consumer removes the untagged bike on the segment 5.
+when(s5 == UNTAGGEDBIKE) remove -> BELT[s1][s2][s3][s4][NONEBIKE]
+
+).
+
+ROBOTARM = ROBOTARM[NONEBIKE],
+ROBOTARM[s:MYRANGE] = (
+/* the deadlock will occur in this part. when these two actions form a conflict.
+if there is empty, means robot arm is able to getting a tagged bike from segment 3 to inspctor.
+or backing a untagged bike (has been processed) from inspector to segment 3.
+**/
+when(s == NONEBIKE) getting -> ROBOTARM[TAGGEDBIKE]|
+
+//this action links with inspect when robot arm got a tagged bike, asking for inspection.
+when(s == TAGGEDBIKE) sendingToInspector -> ROBOTARM[NONEBIKE]
+).
+
+//Inspector removed tag from the tagged bike.
+INSPECTOR = (sendingToInspector -> removeTag -> sendingToAddiBelt -> INSPECTOR).
+
+/* there are just 2 segments in additional belt, the functionality includes receiving the untagged bike from inspector,
+moving the untagged bike from segment 6 to segment 7,
+linking with consumer 2 to remove the processed bike from this system.
+the processed bike does not need to go back to segment 3, and be passing in another way.
+therefore, the deadlock is fixed.
+**/
+ADDIBELT=ADDIBELT[NONEBIKE][NONEBIKE],
+ADDIBELT[s6:MYRANGE][s7:MYRANGE]=(
+when (s6 == NONEBIKE) sendingToAddiBelt ->  ADDIBELT[UNTAGGEDBIKE][s7]|
+when (s6 == UNTAGGEDBIKE && s7 == NONEBIKE) move2 ->  ADDIBELT[NONEBIKE][UNTAGGEDBIKE]|
+when (s7 == UNTAGGEDBIKE) remove2 -> ADDIBELT[s6][NONEBIKE]).
+
+//Process consumer.
+CONSUMER = (remove -> CONSUMER).
+
+//Process consumer2.
+CONSUMER2 = (remove2 -> CONSUMER2).
+
+//check whether there is a deadlock in robot arm.
+property SAFETY1 = ( getting -> sendingToInspector -> SAFETY1).
+
+//check thether this system can arrive one terminate.
+progress PROGRESS1 = {remove, remove2}
+
+//concurrency.
+||MYSYSTEM = (PRODUCER||BELT||ROBOTARM||INSPECTOR||CONSUMER||ADDIBELT||CONSUMER2||SAFETY1).
